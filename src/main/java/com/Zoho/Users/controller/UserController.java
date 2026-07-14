@@ -20,12 +20,14 @@ import com.Zoho.Users.dto.EmployeeDropdownResponse;
 import com.Zoho.Users.dto.EmployeeExperienceRequest;
 import com.Zoho.Users.dto.EmployeeHierarchyRequest;
 import com.Zoho.Users.dto.EmployeeIdentityRequest;
+import com.Zoho.Users.dto.EmployeeListResponse;
 import com.Zoho.Users.dto.EmployeePersonalRequest;
 import com.Zoho.Users.dto.EmployeeRequest;
 import com.Zoho.Users.dto.EmployeeSeparationRequest;
 import com.Zoho.Users.dto.EmployeeWorkRequest;
 import com.Zoho.Users.dto.LoginRequest;
 import com.Zoho.Users.dto.LoginResponse;
+import com.Zoho.Users.dto.NewHireResponse;
 import com.Zoho.Users.dto.UserProfile;
 import com.Zoho.Users.model.Employee;
 import com.Zoho.Users.model.EmployeeBasic;
@@ -42,29 +44,20 @@ public class UserController {
 	@Autowired
 	public UserService service;
 	
+
+	
+	
 	@PostMapping("/login")
-	public LoginResponse login(@RequestBody LoginRequest req){
-		LoginResponse response = new LoginResponse();
+	public LoginResponse login(@RequestBody LoginRequest request){
 
-		if(service.login(req)) {
-			response.setSuccess(true);
-			response.setMessage("Login Success");
-			response.setUserName(service.getUserName(req.getUserEmailId()));
-			response.setEmail(service.getUserEmail(req.getUserEmailId()));
-			response.setUserId(service.getUserId(req.getUserEmailId()));
-			response.setRole(service.getRole(req.getUserEmailId()));
-			return response;
-		}
+	    return service.login(request);
 
-		response.setSuccess(false);
-		response.setMessage("Invalid Credentials");
-		return response;
 	}
 	
-	@GetMapping("/superAdmin")
-	public UserProfile getSuperAdmin() {
-		return service.getSuperAdmin();
-	}
+//	@GetMapping("/superAdmin")
+//	public UserProfile getSuperAdmin() {
+//		return service.getSuperAdmin();
+//	}
 
 	@PostMapping("/addUsers")
 	public User addUsers(@RequestBody User user) {
@@ -73,12 +66,7 @@ public class UserController {
 	}
 	
 	
-//	@PostMapping("/addEmployee")
-//	public Employee addEmployee(@RequestBody Employee emp) {
-//		Employee usr = service.addEmployee(emp);
-//		return usr;
-//		
-//	}
+
 	
 	@PostMapping("/employee")
 	public ResponseEntity<?> addEmployee(@Valid @RequestBody EmployeeRequest request) {
@@ -151,5 +139,11 @@ public class UserController {
 	      service.addEmployeeExperience(request);
 	      return ResponseEntity.ok(Map.of("message","Employee Experience Added Successfully","employeeCode",request.getEmployeeCode()));
 	  }
+	  
+	  @GetMapping("/dashboard/new-hires")
+	  public List<NewHireResponse> getNewHires() {
+	      return service.getNewHires();
+	  }
+	
 	
 }

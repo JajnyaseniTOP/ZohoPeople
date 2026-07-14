@@ -1,5 +1,6 @@
 package com.Zoho.Users.service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,11 +15,14 @@ import com.Zoho.Users.dto.EmployeeDropdownResponse;
 import com.Zoho.Users.dto.EmployeeExperienceRequest;
 import com.Zoho.Users.dto.EmployeeHierarchyRequest;
 import com.Zoho.Users.dto.EmployeeIdentityRequest;
+import com.Zoho.Users.dto.EmployeeListResponse;
 import com.Zoho.Users.dto.EmployeePersonalRequest;
 import com.Zoho.Users.dto.EmployeeRequest;
 import com.Zoho.Users.dto.EmployeeSeparationRequest;
 import com.Zoho.Users.dto.EmployeeWorkRequest;
 import com.Zoho.Users.dto.LoginRequest;
+import com.Zoho.Users.dto.LoginResponse;
+import com.Zoho.Users.dto.NewHireResponse;
 import com.Zoho.Users.dto.UserProfile;
 import com.Zoho.Users.model.Employee;
 import com.Zoho.Users.model.EmployeeBank;
@@ -83,61 +87,53 @@ public class UserServiceImpl implements UserService{
 	
 	@Autowired
 	private EmployeeExperienceRepository experienceRepo;
-
+	
+	
 	@Override
-	public boolean login(LoginRequest req) {
-	    // TEMP DEBUG — remove after diagnosing login
-	    System.out.println("[LOGIN] received email=[" + req.getUserEmailId() + "] password=[" + req.getPassword() + "]");
+	public LoginResponse login(LoginRequest request) {
 
-	    User user = userRepo.findByEmail(req.getUserEmailId()).orElse(null);
+	    LoginResponse response = new LoginResponse();
 
-        if (user == null) {
-            System.out.println("[LOGIN] no user found for email=[" + req.getUserEmailId() + "]");
-            return false;
-        }
+	    User user = userRepo.findByEmail(request.getUserEmailId());
 
-        System.out.println("[LOGIN] db password=[" + user.getPassword() + "] match=" + user.getPassword().equals(req.getPassword()));
+	    if(user == null) {
 
-        return user.getPassword().equals(req.getPassword());
+	        response.setSuccess(false);
+	        response.setMessage("Invalid Email");
+
+	        return response;
+	    }
+
+	    if(!user.getPassword().equals(request.getPassword())) {
+
+	        response.setSuccess(false);
+	        response.setMessage("Invalid Password");
+
+	        return response;
+	    }
+
+	    Employee employee = user.getEmployee();
+
+	    EmployeeWork work = empworkRepo.findByEmployee(employee);
+
+	    response.setSuccess(true);
+	    response.setMessage("Login Successful");
+
+	    response.setEmployeeCode(employee.getEmployeeCode());
+
+	    response.setEmployeeName(
+	            employee.getFirstName() + " " + employee.getLastName());
+
+	    if(work != null) {
+	        response.setRole(work.getZohoRole());
+	    }
+
+	    return response;
+
 	}
 
-	@Override
-	public String getUserName(String userEmail) {
-		User user = userRepo.findByEmail(userEmail).orElse(null);
-		return user != null ? user.getUsername() : "User";
-	}
 
-	@Override
-	public String getUserEmail(String userEmail) {
-		User user = userRepo.findByEmail(userEmail).orElse(null);
-		return user != null ? user.getEmail() : "";
-	}
 
-	@Override
-	public String getUserId(String userEmail) {
-		User user = userRepo.findByEmail(userEmail).orElse(null);
-		return user != null ? user.getUserId() : "";
-	}
-
-	@Override
-	public String getRole(String userEmail) {
-		User user = userRepo.findByEmail(userEmail).orElse(null);
-		return user != null ? user.getRole() : "";
-	}
-
-	@Override
-	public UserProfile getSuperAdmin() {
-		User user = userRepo.findFirstByRoleIgnoreCase("super Administrator").orElse(null);
-		if (user == null) {
-			return null;
-		}
-		UserProfile profile = new UserProfile();
-		profile.setUserId(user.getUserId());
-		profile.setUserName(user.getUsername());
-		profile.setEmail(user.getEmail());
-		profile.setRole(user.getRole());
-		return profile;
-	}
 	
 	@Override
 	public User addUsers(User user) {
@@ -437,4 +433,33 @@ public class UserServiceImpl implements UserService{
 	    experience.setRelevant(request.getRelevant());
 	    return experienceRepo.save(experience);
 	}
+	
+	
+	@Override
+	public List<NewHireResponse> getNewHires() {	 
+	    LocalDate date = LocalDate.now().minusDays(15);
+	    List<EmployeeWork> workList = empworkRepo.findByJoiningDateGreaterThanEqual(date);
+	    List<NewHireResponse> response = new ArrayList<>();
+	    for (EmployeeWork work : workList) {
+	        Employee employee = work.getEmployee();
+	        NewHireResponse dto = new NewHireResponse();
+	        dto.setEmployeeCode(employee.getEmployeeCode());
+	        dto.setEmployeeName(employee.getFirstName() + " " + employee.getLastName());
+	        dto.setEmail(employee.getEmail());
+	        response.add(dto);
+	    }
+	    return response;
+	}
+
+
+
+
+
+//	@Override
+//	public UserProfile getSuperAdmin() {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
+	
+
 }

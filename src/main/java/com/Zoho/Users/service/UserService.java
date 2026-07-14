@@ -10,11 +10,14 @@ import com.Zoho.Users.dto.EmployeeDropdownResponse;
 import com.Zoho.Users.dto.EmployeeExperienceRequest;
 import com.Zoho.Users.dto.EmployeeHierarchyRequest;
 import com.Zoho.Users.dto.EmployeeIdentityRequest;
+import com.Zoho.Users.dto.EmployeeListResponse;
 import com.Zoho.Users.dto.EmployeePersonalRequest;
 import com.Zoho.Users.dto.EmployeeRequest;
 import com.Zoho.Users.dto.EmployeeSeparationRequest;
 import com.Zoho.Users.dto.EmployeeWorkRequest;
 import com.Zoho.Users.dto.LoginRequest;
+import com.Zoho.Users.dto.LoginResponse;
+import com.Zoho.Users.dto.NewHireResponse;
 import com.Zoho.Users.dto.UserProfile;
 import com.Zoho.Users.model.Employee;
 import com.Zoho.Users.model.EmployeeBank;
@@ -31,12 +34,13 @@ import com.Zoho.Users.model.User;
 
 public interface UserService {
 
-	boolean login(LoginRequest req);
-	String getUserName(String userId);
-	String getUserEmail(String userId);
-	String getUserId(String userEmail);
-	String getRole(String userEmail);
-	UserProfile getSuperAdmin();
+	LoginResponse login(LoginRequest request);
+	//String getEmployeeCode(String email);
+	//String getUserName(String userId);
+	//String getUserEmail(String userId);
+	//String getUserId(String userEmail);
+	//String getRole(String userEmail);
+	//UserProfile getSuperAdmin();
 	Employee addEmployee(EmployeeRequest request);
 	EmployeeWork addEmployeeWork(EmployeeWorkRequest request);
 
@@ -51,4 +55,6 @@ public interface UserService {
 	EmployeePersonal saveEmployeePersonal(EmployeePersonalRequest request);
 	EmployeeBank saveEmployeeBank(EmployeeBankRequest request);
 	EmployeeExperience addEmployeeExperience(EmployeeExperienceRequest request);
+	List<NewHireResponse> getNewHires();
+	
 }
