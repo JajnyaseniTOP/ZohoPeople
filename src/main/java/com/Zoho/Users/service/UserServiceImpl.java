@@ -1,12 +1,14 @@
 package com.Zoho.Users.service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.Zoho.Users.dto.AttendanceResponse;
 import com.Zoho.Users.dto.EmployeeBankRequest;
 import com.Zoho.Users.dto.EmployeeBasicRequest;
 import com.Zoho.Users.dto.EmployeeContactRequest;
@@ -17,6 +19,7 @@ import com.Zoho.Users.dto.EmployeeHierarchyRequest;
 import com.Zoho.Users.dto.EmployeeIdentityRequest;
 import com.Zoho.Users.dto.EmployeeListResponse;
 import com.Zoho.Users.dto.EmployeePersonalRequest;
+import com.Zoho.Users.dto.EmployeeProfileResponse;
 import com.Zoho.Users.dto.EmployeeRequest;
 import com.Zoho.Users.dto.EmployeeSeparationRequest;
 import com.Zoho.Users.dto.EmployeeWorkRequest;
@@ -25,6 +28,7 @@ import com.Zoho.Users.dto.LoginResponse;
 import com.Zoho.Users.dto.NewHireResponse;
 import com.Zoho.Users.dto.UserProfile;
 import com.Zoho.Users.model.Employee;
+import com.Zoho.Users.model.EmployeeAttendance;
 import com.Zoho.Users.model.EmployeeBank;
 import com.Zoho.Users.model.EmployeeBasic;
 import com.Zoho.Users.model.EmployeeContact;
@@ -36,6 +40,7 @@ import com.Zoho.Users.model.EmployeePersonal;
 import com.Zoho.Users.model.EmployeeSeparation;
 import com.Zoho.Users.model.EmployeeWork;
 import com.Zoho.Users.model.User;
+import com.Zoho.Users.repository.EmployeeAttendanceRepository;
 import com.Zoho.Users.repository.EmployeeBankRepository;
 import com.Zoho.Users.repository.EmployeeBasicRepository;
 import com.Zoho.Users.repository.EmployeeContactRepository;
@@ -49,6 +54,7 @@ import com.Zoho.Users.repository.EmployeeSeparationRepository;
 import com.Zoho.Users.repository.EmployeeWorkRepository;
 import com.Zoho.Users.repository.UserRepository;
 
+import java.time.Duration;
 import jakarta.transaction.Transactional;
 
 @Service
@@ -88,6 +94,9 @@ public class UserServiceImpl implements UserService{
 	@Autowired
 	private EmployeeExperienceRepository experienceRepo;
 	
+	@Autowired
+	private EmployeeAttendanceRepository attendanceRepo;
+	
 	
 	@Override
 	public LoginResponse login(LoginRequest request) {
@@ -121,11 +130,10 @@ public class UserServiceImpl implements UserService{
 
 	    response.setEmployeeCode(employee.getEmployeeCode());
 
-	    response.setEmployeeName(
-	            employee.getFirstName() + " " + employee.getLastName());
+	    response.setEmployeeName(employee.getFirstName() + " " + employee.getLastName());
 
 	    if(work != null) {
-	        response.setRole(work.getZohoRole());
+	        response.setRole(work.getDesignation());
 	    }
 
 	    return response;
@@ -451,7 +459,21 @@ public class UserServiceImpl implements UserService{
 	    return response;
 	}
 
-
+	@Override
+	public EmployeeProfileResponse getProfile(String employeeCode) {
+	    Employee employee = empRepo.findByEmployeeCode(employeeCode);
+	    if (employee == null) {
+	        throw new RuntimeException("Employee not found");
+	    }
+	    EmployeeWork work = empworkRepo.findByEmployee(employee);
+	    EmployeeProfileResponse response = new EmployeeProfileResponse();
+	    response.setEmployeeCode(employee.getEmployeeCode());
+	    response.setEmployeeName(employee.getFirstName() + " " + employee.getLastName());
+	    if (work != null) {
+	        response.setRole(work.getDesignation());
+	    }
+	    return response;
+	}
 
 
 
@@ -461,5 +483,76 @@ public class UserServiceImpl implements UserService{
 //		return null;
 //	}
 	
+	
+	@Override
+	public AttendanceResponse checkIn(String employeeCode){
+	    Employee employee = empRepo.findByEmployeeCode(employeeCode);
+	    if(employee==null){
+	        throw new RuntimeException("Employee not found");
+	    }
+	    LocalDate today = LocalDate.now();
+	    EmployeeAttendance attendance =	attendanceRepo.findByEmployeeAndAttendanceDate(employee,today);
+	    if(attendance==null){
+	        attendance = new EmployeeAttendance();
+	        attendance.setEmployee(employee);
+	        attendance.setAttendanceDate(today);
+	    }
+	    attendance.setCheckInTime(LocalDateTime.now());
+	    attendance.setStatus("IN");
+	    attendanceRepo.save(attendance);
+
+	    EmployeeWork work =	empworkRepo.findByEmployee(employee);
+	    AttendanceResponse response = new AttendanceResponse();
+	    response.setEmployeeCode(employee.getEmployeeCode());
+	    response.setEmployeeName(employee.getFirstName()+" "+employee.getLastName());
+	    response.setRole(work.getZohoRole());
+	    response.setStatus("IN");
+	    response.setCheckInTime(attendance.getCheckInTime());
+	    return response;
+	}
+	
+	
+	@Override
+	public AttendanceResponse checkOut(String employeeCode){
+	    Employee employee =	 empRepo.findByEmployeeCode(employeeCode);
+	    LocalDate today = LocalDate.now();
+	    EmployeeAttendance attendance =	attendanceRepo.findByEmployeeAndAttendanceDate(employee,today);
+	    attendance.setCheckOutTime(LocalDateTime.now());
+	    Duration duration =	  Duration.between(	attendance.getCheckInTime(),attendance.getCheckOutTime());
+	    attendance.setWorkingHours(duration.toHours()+" Hrs "+(duration.toMinutes()%60)+" Min");
+	    attendance.setStatus("OUT");
+	    attendanceRepo.save(attendance);
+	    EmployeeWork work =	empworkRepo.findByEmployee(employee);
+	    AttendanceResponse response = new AttendanceResponse();
+	    response.setEmployeeCode(employee.getEmployeeCode());
+	    response.setEmployeeName(employee.getFirstName()+" "+employee.getLastName());
+	    response.setRole(work.getZohoRole());
+	    response.setStatus("OUT");
+	    response.setCheckInTime(attendance.getCheckInTime());
+	    response.setCheckOutTime(attendance.getCheckOutTime());
+	    response.setWorkingHours(attendance.getWorkingHours());
+	    return response;
+	}
+	
+	@Override
+	public AttendanceResponse getAttendanceStatus(String employeeCode){
+	    Employee employee =	empRepo.findByEmployeeCode(employeeCode);
+	    LocalDate today = LocalDate.now();
+	    EmployeeAttendance attendance =	 attendanceRepo.findByEmployeeAndAttendanceDate(employee,today);
+	    EmployeeWork work =	 empworkRepo.findByEmployee(employee);
+	    AttendanceResponse response =new AttendanceResponse();
+	    response.setEmployeeCode(employee.getEmployeeCode());
+	    response.setEmployeeName(employee.getFirstName()+" "+employee.getLastName());
+	    response.setRole(work.getZohoRole());
+	    if(attendance!=null){
+	        response.setStatus(attendance.getStatus());
+	        response.setCheckInTime(attendance.getCheckInTime());
+	        response.setCheckOutTime(attendance.getCheckOutTime());
+	        response.setWorkingHours(attendance.getWorkingHours());
+	    }else{
+	        response.setStatus("OUT");
+	    }
+	    return response;
+	}
 
 }

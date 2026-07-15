@@ -7,11 +7,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.Zoho.Users.dto.AttendanceResponse;
 import com.Zoho.Users.dto.EmployeeBankRequest;
 import com.Zoho.Users.dto.EmployeeBasicRequest;
 import com.Zoho.Users.dto.EmployeeContactRequest;
@@ -22,6 +24,7 @@ import com.Zoho.Users.dto.EmployeeHierarchyRequest;
 import com.Zoho.Users.dto.EmployeeIdentityRequest;
 import com.Zoho.Users.dto.EmployeeListResponse;
 import com.Zoho.Users.dto.EmployeePersonalRequest;
+import com.Zoho.Users.dto.EmployeeProfileResponse;
 import com.Zoho.Users.dto.EmployeeRequest;
 import com.Zoho.Users.dto.EmployeeSeparationRequest;
 import com.Zoho.Users.dto.EmployeeWorkRequest;
@@ -143,6 +146,26 @@ public class UserController {
 	  @GetMapping("/dashboard/new-hires")
 	  public List<NewHireResponse> getNewHires() {
 	      return service.getNewHires();
+	  }
+	  
+	  @GetMapping("/employee/profile/{employeeCode}")
+	  public ResponseEntity<EmployeeProfileResponse> getProfile(@PathVariable String employeeCode){
+	      return ResponseEntity.ok(service.getProfile(employeeCode));
+	  }
+	  
+	  @PostMapping("/attendance/checkin/{employeeCode}")
+	  public ResponseEntity<AttendanceResponse> checkIn(@PathVariable String employeeCode){
+	      return ResponseEntity.ok(service.checkIn(employeeCode));
+	  }
+	  
+	  @PostMapping("/attendance/checkout/{employeeCode}")
+	  public ResponseEntity<AttendanceResponse> checkOut(@PathVariable String employeeCode){
+	      return ResponseEntity.ok(service.checkOut(employeeCode));
+	  }
+	  
+	  @GetMapping("/attendance/status/{employeeCode}")
+	  public ResponseEntity<AttendanceResponse> getAttendanceStatus(@PathVariable String employeeCode){
+	      return ResponseEntity.ok(service.getAttendanceStatus(employeeCode));
 	  }
 	
 	

@@ -2,6 +2,7 @@ package com.Zoho.Users.service;
 
 import java.util.List;
 
+import com.Zoho.Users.dto.AttendanceResponse;
 import com.Zoho.Users.dto.EmployeeBankRequest;
 import com.Zoho.Users.dto.EmployeeBasicRequest;
 import com.Zoho.Users.dto.EmployeeContactRequest;
@@ -12,6 +13,7 @@ import com.Zoho.Users.dto.EmployeeHierarchyRequest;
 import com.Zoho.Users.dto.EmployeeIdentityRequest;
 import com.Zoho.Users.dto.EmployeeListResponse;
 import com.Zoho.Users.dto.EmployeePersonalRequest;
+import com.Zoho.Users.dto.EmployeeProfileResponse;
 import com.Zoho.Users.dto.EmployeeRequest;
 import com.Zoho.Users.dto.EmployeeSeparationRequest;
 import com.Zoho.Users.dto.EmployeeWorkRequest;
@@ -56,5 +58,12 @@ public interface UserService {
 	EmployeeBank saveEmployeeBank(EmployeeBankRequest request);
 	EmployeeExperience addEmployeeExperience(EmployeeExperienceRequest request);
 	List<NewHireResponse> getNewHires();
+	EmployeeProfileResponse getProfile(String employeeCode);
+	
+	AttendanceResponse checkIn(String employeeCode);
+	AttendanceResponse checkOut(String employeeCode);
+	AttendanceResponse getAttendanceStatus(String employeeCode);
+	
+	
 	
 }
